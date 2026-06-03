@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "name": "IDE / AI Coding",
+  "mode": "merge",
+  "slots": {
+    "up": {
+      "title": "Command Palette",
+      "iconName": "command",
+      "kind": "keyboardShortcut",
+      "shortcutKey": "cmd+shift+p"
+    },
+    "down": {
+      "title": "Quick Open",
+      "iconName": "doc.text.magnifyingglass",
+      "kind": "keyboardShortcut",
+      "shortcutKey": "cmd+p"
+    },
+    "left": {
+      "title": "Inline AI Edit",
+      "iconName": "wand.and.sparkles",
+      "kind": "keyboardShortcut",
+      "shortcutKey": "cmd+k"
+    },
+    "right": {
+      "title": "AI Chat",
+      "iconName": "sparkles",
+      "kind": "keyboardShortcut",
+      "shortcutKey": "cmd+l"
+    }
+  }
+}

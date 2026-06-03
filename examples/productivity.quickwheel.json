@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "name": "Productivity",
+  "mode": "merge",
+  "slots": {
+    "up": {
+      "title": "Search",
+      "iconName": "magnifyingglass",
+      "kind": "keyboardShortcut",
+      "shortcutKey": "cmd+f"
+    },
+    "down": {
+      "title": "Paste Thanks",
+      "iconName": "text.quote",
+      "kind": "pasteText",
+      "text": "Thanks,"
+    },
+    "left": {
+      "title": "Back",
+      "iconName": "chevron.left",
+      "kind": "keyboardShortcut",
+      "shortcutKey": "cmd+left"
+    },
+    "right": {
+      "title": "Forward",
+      "iconName": "chevron.right",
+      "kind": "keyboardShortcut",
+      "shortcutKey": "cmd+right"
+    }
+  }
+}
