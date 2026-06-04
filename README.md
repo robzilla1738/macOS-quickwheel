@@ -3,6 +3,7 @@
 [![Release](https://img.shields.io/github/v/release/robzilla1738/macOS-quickwheel)](https://github.com/robzilla1738/macOS-quickwheel/releases/latest)
 [![CI](https://github.com/robzilla1738/macOS-quickwheel/actions/workflows/ci.yml/badge.svg)](https://github.com/robzilla1738/macOS-quickwheel/actions/workflows/ci.yml)
 ![macOS 13+](https://img.shields.io/badge/macOS-13%2B-blue)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-robcourson-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/robcourson)
 
 Quickwheel is a macOS menu-bar utility for fast directional actions. Hold the activation modifier, left-click anywhere, flick toward a direction, and release to run that slot — a radial joystick for your most-used shortcuts, scripts, and apps.
@@ -78,3 +79,7 @@ More detail in [docs/development.md](docs/development.md) and [docs/production-c
 ## Support
 
 If Quickwheel saves you time, you can [buy me a coffee](https://buymeacoffee.com/robcourson). ☕
+
+## License
+
+[MIT](LICENSE)
