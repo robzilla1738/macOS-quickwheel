@@ -148,6 +148,9 @@ final class InputController {
 
             if keyCode == kVK_Escape {
                 cancelGesture()
+            } else if let digit = Self.layerDigitKeyCodes[keyCode] {
+                // Tapping 1/2/3 while the wheel is open switches layers live.
+                switchLayer(toDigit: digit)
             }
             return nil
 
@@ -225,6 +228,16 @@ final class InputController {
             selection: nil,
             dragVector: CGVector(dx: 0, dy: 0)
         )
+    }
+
+    private func switchLayer(toDigit digit: Int) {
+        let layerIndex = Self.layerIndex(
+            forHeldDigit: digit,
+            layerCount: settingsStore.settings.layers.count
+        )
+        guard layerIndex != activeLayerIndex else { return }
+        activeLayerIndex = layerIndex
+        overlayController.setActiveLayer(layerIndex)
     }
 
     private func updateGesture(at location: CGPoint) {

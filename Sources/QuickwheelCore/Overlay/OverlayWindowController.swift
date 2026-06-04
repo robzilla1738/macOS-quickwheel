@@ -31,6 +31,11 @@ final class OverlayWindowController {
         panel.orderFrontRegardless()
     }
 
+    func setActiveLayer(_ layerIndex: Int) {
+        model.activeLayerIndex = model.settings.clampedLayerIndex(layerIndex)
+        refreshCycleIndices()
+    }
+
     private func refreshCycleIndices() {
         var cycleIndices: [WheelDirection: Int] = [:]
         for direction in WheelDirection.allCases {

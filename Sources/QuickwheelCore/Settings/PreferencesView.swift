@@ -43,7 +43,7 @@ struct PreferencesView: View {
                 .pickerStyle(.segmented)
                 .labelsHidden()
 
-                Text("\(settingsStore.settings.triggerModifier.displayName)+click opens Layer 1. Hold 1, 2, or 3 with it for the other layers.")
+                Text("\(settingsStore.settings.triggerModifier.displayName)+click opens Layer 1. Press 1, 2, or 3 before or during a gesture to switch layers.")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)

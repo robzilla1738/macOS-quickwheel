@@ -35,4 +35,26 @@ final class DirectionResolverTests: XCTestCase {
         XCTAssertEqual(convertedPoint.x, 88.95703125, accuracy: 0.001)
         XCTAssertEqual(convertedPoint.y, 691.93359375, accuracy: 0.001)
     }
+
+    func testConversionFlipsAgainstPrimaryScreenNotDesktopUnion() {
+        // A taller secondary display extending above the primary must not
+        // shift the converted point (regression: overlay opened above clicks).
+        let primaryFrame = CGRect(x: 0, y: 0, width: 1728, height: 1117)
+        let tallerSecondaryFrame = CGRect(x: 1728, y: -100, width: 3440, height: 1440)
+
+        let convertedPoint = MouseCoordinateConverter.appKitPoint(
+            fromQuartzPoint: CGPoint(x: 400, y: 500),
+            screenFrames: [primaryFrame, tallerSecondaryFrame]
+        )
+
+        XCTAssertEqual(convertedPoint.y, 1117 - 500, accuracy: 0.001)
+
+        // Same result regardless of screen ordering.
+        let reorderedPoint = MouseCoordinateConverter.appKitPoint(
+            fromQuartzPoint: CGPoint(x: 400, y: 500),
+            screenFrames: [tallerSecondaryFrame, primaryFrame]
+        )
+
+        XCTAssertEqual(reorderedPoint.y, 1117 - 500, accuracy: 0.001)
+    }
 }

@@ -10,17 +10,19 @@ enum MouseCoordinateConverter {
     }
 
     static func appKitPoint(fromQuartzPoint quartzPoint: CGPoint, screenFrames: [CGRect]) -> CGPoint {
-        let desktopFrame = screenFrames.reduce(CGRect.null) { partialResult, frame in
-            partialResult.union(frame)
-        }
+        // Quartz global coordinates originate at the top-left of the primary
+        // screen; AppKit at its bottom-left. Flip against the primary screen
+        // frame (origin at (0, 0)), never the union of all screens - a taller
+        // secondary display would otherwise shift every converted point.
+        let primaryFrame = screenFrames.first { $0.origin == .zero } ?? screenFrames.first
 
-        guard !desktopFrame.isNull else {
+        guard let primaryFrame else {
             return quartzPoint
         }
 
         return CGPoint(
             x: quartzPoint.x,
-            y: desktopFrame.maxY - quartzPoint.y
+            y: primaryFrame.maxY - quartzPoint.y
         )
     }
 }
