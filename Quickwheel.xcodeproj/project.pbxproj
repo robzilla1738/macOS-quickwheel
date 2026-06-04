@@ -21,6 +21,7 @@
 		89F36634049C84E8B2DB0AD1 /* QuickwheelActionIconResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6872EA91C1485303A944846A /* QuickwheelActionIconResolver.swift */; };
 		96212288E03CB466397FA833 /* QuickwheelSymbol.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF1C9119FFB6D55676EEE2E1 /* QuickwheelSymbol.swift */; };
 		A5599412B1478DB360F4620A /* InputController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13438EE1100D0B549425F897 /* InputController.swift */; };
+		A8D37AC9B38665DEDEFBA329 /* QuickwheelIconStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09D3BAD8D0B954701DAF18AC /* QuickwheelIconStore.swift */; };
 		A94FAD634B497EAFC98194D3 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E67A992C17372D96A08CACF /* main.swift */; };
 		B420A37A54483C11632E07CF /* PreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D9A9F032509BF084D15074E /* PreferencesView.swift */; };
 		D4DAAB6CC8B23929EE35AC8C /* RadialOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC7243652346681009BC10B9 /* RadialOverlayView.swift */; };
@@ -28,6 +29,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		09D3BAD8D0B954701DAF18AC /* QuickwheelIconStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickwheelIconStore.swift; sourceTree = "<group>"; };
 		0D9A9F032509BF084D15074E /* PreferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesView.swift; sourceTree = "<group>"; };
 		13438EE1100D0B549425F897 /* InputController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputController.swift; sourceTree = "<group>"; };
 		15618D46F92DCF272A8EA37E /* MouseCoordinateConverter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MouseCoordinateConverter.swift; sourceTree = "<group>"; };
@@ -82,6 +84,7 @@
 				E206A5996288C7462F8909AC /* PreferencesWindowController.swift */,
 				6872EA91C1485303A944846A /* QuickwheelActionIconResolver.swift */,
 				81FA32013DD82CDBB6CB2DB1 /* QuickwheelConfigurationDocument.swift */,
+				09D3BAD8D0B954701DAF18AC /* QuickwheelIconStore.swift */,
 				72773EFC25F11598D646F0C2 /* QuickwheelShortcutParser.swift */,
 				EF1C9119FFB6D55676EEE2E1 /* QuickwheelSymbol.swift */,
 				65099DD99947F9B0ECDDC76D /* SettingsStore.swift */,
@@ -245,6 +248,7 @@
 				29C933B26D02B9F4AD202A21 /* PreferencesWindowController.swift in Sources */,
 				89F36634049C84E8B2DB0AD1 /* QuickwheelActionIconResolver.swift in Sources */,
 				0EF377A86F556B0A9F0B579E /* QuickwheelConfigurationDocument.swift in Sources */,
+				A8D37AC9B38665DEDEFBA329 /* QuickwheelIconStore.swift in Sources */,
 				772ABF004A8AF9A6B21AB9C1 /* QuickwheelShortcutParser.swift in Sources */,
 				96212288E03CB466397FA833 /* QuickwheelSymbol.swift in Sources */,
 				D4DAAB6CC8B23929EE35AC8C /* RadialOverlayView.swift in Sources */,

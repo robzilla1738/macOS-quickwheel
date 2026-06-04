@@ -6,42 +6,45 @@ enum QuickwheelConfigurationImportMode: String, Codable {
 }
 
 struct QuickwheelSlotOverrides: Codable, Equatable {
-    var up: QuickwheelAction?
-    var down: QuickwheelAction?
-    var left: QuickwheelAction?
-    var right: QuickwheelAction?
+    var up: QuickwheelSlot?
+    var down: QuickwheelSlot?
+    var left: QuickwheelSlot?
+    var right: QuickwheelSlot?
 
     var isEmpty: Bool {
         up == nil && down == nil && left == nil && right == nil
     }
 
     func apply(to settings: inout QuickwheelSettings) {
+        guard !settings.layers.isEmpty else { return }
+
         if let up {
-            settings.up = up
+            settings.layers[0].up = up
         }
 
         if let down {
-            settings.down = down
+            settings.layers[0].down = down
         }
 
         if let left {
-            settings.left = left
+            settings.layers[0].left = left
         }
 
         if let right {
-            settings.right = right
+            settings.layers[0].right = right
         }
     }
 }
 
 struct QuickwheelConfigurationDocument: Codable, Equatable {
-    static let currentSchemaVersion = 1
+    static let currentSchemaVersion = 2
 
     var schemaVersion = currentSchemaVersion
     var name = "Quickwheel Configuration"
     var mode = QuickwheelConfigurationImportMode.replace
     var settings: QuickwheelSettings?
     var slots: QuickwheelSlotOverrides?
+    var layers: [WheelLayer]?
 
     private enum CodingKeys: String, CodingKey {
         case schemaVersion
@@ -49,6 +52,7 @@ struct QuickwheelConfigurationDocument: Codable, Equatable {
         case mode
         case settings
         case slots
+        case layers
     }
 
     init(
@@ -56,13 +60,15 @@ struct QuickwheelConfigurationDocument: Codable, Equatable {
         name: String = "Quickwheel Configuration",
         mode: QuickwheelConfigurationImportMode = .replace,
         settings: QuickwheelSettings? = nil,
-        slots: QuickwheelSlotOverrides? = nil
+        slots: QuickwheelSlotOverrides? = nil,
+        layers: [WheelLayer]? = nil
     ) {
         self.schemaVersion = schemaVersion
         self.name = name
         self.mode = mode
         self.settings = settings
         self.slots = slots
+        self.layers = layers
     }
 
     init(from decoder: Decoder) throws {
@@ -72,6 +78,7 @@ struct QuickwheelConfigurationDocument: Codable, Equatable {
         mode = try container.decodeIfPresent(QuickwheelConfigurationImportMode.self, forKey: .mode) ?? .merge
         settings = try container.decodeIfPresent(QuickwheelSettings.self, forKey: .settings)
         slots = try container.decodeIfPresent(QuickwheelSlotOverrides.self, forKey: .slots)
+        layers = try container.decodeIfPresent([WheelLayer].self, forKey: .layers)
     }
 
     func resolvedSettings(currentSettings: QuickwheelSettings) -> QuickwheelSettings {
@@ -91,6 +98,10 @@ struct QuickwheelConfigurationDocument: Codable, Equatable {
                 resolvedSettings.overlaySize = settings.overlaySize
                 resolvedSettings.showOverlayLabels = settings.showOverlayLabels
             }
+        }
+
+        if let layers, !layers.isEmpty {
+            resolvedSettings.layers = layers
         }
 
         slots?.apply(to: &resolvedSettings)
@@ -205,7 +216,7 @@ enum QuickwheelConfigurationFiles {
 
     ```json
     {
-      "schemaVersion": 1,
+      "schemaVersion": 2,
       "mode": "merge",
       "slots": {
         "up": {
@@ -220,7 +231,32 @@ enum QuickwheelConfigurationFiles {
 
     Supported action kinds: `none`, `openURL`, `openFile`, `revealInFinder`, `launchApp`, `shellCommand`, `appleScript`, `pasteText`, `keyboardShortcut`.
 
-    Leave `iconName` blank for app/file actions when Quickwheel should show the target app, file, or folder icon automatically.
+    ## Layers
+
+    Quickwheel has three wheel layers. Modifier+click opens Layer 1; holding 1, 2, or 3 with the modifier opens that layer. `slots` entries apply to Layer 1. To configure every layer, provide a top-level `layers` array of layer objects, each with `name` and `up`/`down`/`left`/`right` slots.
+
+    ## Trigger patterns (multi-step slots)
+
+    A slot can be a single action object, or `{ "steps": [action, action, ...] }`. Each trigger runs the next step and wraps around; the cycle position survives restarts.
+
+    ```json
+    {
+      "schemaVersion": 2,
+      "mode": "merge",
+      "slots": {
+        "up": {
+          "steps": [
+            { "title": "Start Recording", "kind": "openURL", "urlString": "spokenly://toggle" },
+            { "title": "Stop Recording", "kind": "openURL", "urlString": "spokenly://toggle" }
+          ]
+        }
+      }
+    }
+    ```
+
+    ## Icons
+
+    Leave `iconName` blank for app/file actions when Quickwheel should show the target app, file, or folder icon automatically. Set `iconImagePath` to use a custom image: relative paths (for example `Icons/my-icon.png`) resolve against this configuration folder; absolute and `~/` paths also work. A custom image overrides `iconName`.
 
     To change the activation gesture in a full `settings` object, set `triggerModifier` to one of: `leftCommand`, `rightCommand`, `eitherCommand`, `leftOption`, `rightOption`, `eitherOption`, `leftControl`, `rightControl`, `eitherControl`, `leftShift`, `rightShift`, `eitherShift`.
     """
@@ -231,22 +267,57 @@ enum QuickwheelConfigurationFiles {
       "title": "Quickwheel Configuration",
       "type": "object",
       "properties": {
-        "schemaVersion": { "type": "integer", "const": 1 },
+        "schemaVersion": { "type": "integer", "enum": [1, 2] },
         "name": { "type": "string" },
         "mode": { "type": "string", "enum": ["replace", "merge"] },
         "settings": { "$ref": "#/$defs/settings" },
-        "slots": { "$ref": "#/$defs/slots" }
+        "slots": { "$ref": "#/$defs/slots" },
+        "layers": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/layer" },
+          "maxItems": 3
+        }
       },
       "$defs": {
         "slots": {
           "type": "object",
           "properties": {
-            "up": { "$ref": "#/$defs/action" },
-            "down": { "$ref": "#/$defs/action" },
-            "left": { "$ref": "#/$defs/action" },
-            "right": { "$ref": "#/$defs/action" }
+            "up": { "$ref": "#/$defs/slot" },
+            "down": { "$ref": "#/$defs/slot" },
+            "left": { "$ref": "#/$defs/slot" },
+            "right": { "$ref": "#/$defs/slot" }
           },
           "additionalProperties": false
+        },
+        "layer": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "name": { "type": "string" },
+            "up": { "$ref": "#/$defs/slot" },
+            "down": { "$ref": "#/$defs/slot" },
+            "left": { "$ref": "#/$defs/slot" },
+            "right": { "$ref": "#/$defs/slot" }
+          },
+          "additionalProperties": false
+        },
+        "slot": {
+          "oneOf": [
+            { "$ref": "#/$defs/action" },
+            {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "steps": {
+                  "type": "array",
+                  "items": { "$ref": "#/$defs/action" },
+                  "minItems": 1
+                }
+              },
+              "required": ["steps"],
+              "additionalProperties": false
+            }
+          ]
         },
         "settings": {
           "type": "object",
@@ -261,6 +332,11 @@ enum QuickwheelConfigurationFiles {
             "deadZoneRadius": { "type": "number", "minimum": 12, "maximum": 120 },
             "overlaySize": { "type": "number", "minimum": 144, "maximum": 260 },
             "showOverlayLabels": { "type": "boolean", "default": false },
+            "layers": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/layer" },
+              "maxItems": 3
+            },
             "up": { "$ref": "#/$defs/action" },
             "down": { "$ref": "#/$defs/action" },
             "left": { "$ref": "#/$defs/action" },
@@ -271,8 +347,10 @@ enum QuickwheelConfigurationFiles {
         "action": {
           "type": "object",
           "properties": {
+            "id": { "type": "string" },
             "title": { "type": "string" },
             "iconName": { "type": "string" },
+            "iconImagePath": { "type": "string", "description": "Custom icon image. Relative paths resolve against the Quickwheel configuration folder." },
             "kind": {
               "type": "string",
               "enum": ["none", "openURL", "openFile", "revealInFinder", "launchApp", "shellCommand", "appleScript", "pasteText", "keyboardShortcut"]

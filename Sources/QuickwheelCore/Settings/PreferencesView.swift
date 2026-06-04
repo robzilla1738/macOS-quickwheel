@@ -5,6 +5,8 @@ import UniformTypeIdentifiers
 struct PreferencesView: View {
     @ObservedObject var settingsStore: SettingsStore
     @State private var selectedDirection: WheelDirection = .up
+    @State private var selectedLayer = 0
+    @State private var selectedStep = 0
 
     var body: some View {
         HStack(spacing: 0) {
@@ -32,11 +34,33 @@ struct PreferencesView: View {
                 .padding(.horizontal, 14)
                 .padding(.top, 16)
 
+            VStack(alignment: .leading, spacing: 6) {
+                Picker("Layer", selection: $selectedLayer) {
+                    ForEach(0..<QuickwheelSettings.layerCount, id: \.self) { index in
+                        Text("\(index + 1)").tag(index)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+
+                Text("\(settingsStore.settings.triggerModifier.displayName)+click opens Layer 1. Hold 1, 2, or 3 with it for the other layers.")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(.horizontal, 12)
+            .onChange(of: selectedLayer) { _ in
+                selectedStep = 0
+            }
+            .onChange(of: selectedDirection) { _ in
+                selectedStep = 0
+            }
+
             VStack(spacing: 6) {
                 ForEach(WheelDirection.allCases) { direction in
                     SlotSidebarButton(
                         direction: direction,
-                        action: settingsStore.settings.action(for: direction),
+                        slot: settingsStore.settings.slot(layerIndex: selectedLayer, direction: direction),
                         isSelected: selectedDirection == direction
                     ) {
                         selectedDirection = direction
@@ -131,11 +155,69 @@ struct PreferencesView: View {
     }
 
     private var selectedActionEditor: some View {
-        SettingsSection(title: "\(selectedDirection.displayName) Slot") {
-            ActionEditor(
-                direction: selectedDirection,
-                action: actionBinding(for: selectedDirection)
-            )
+        SettingsSection(title: "\(selectedDirection.displayName) Slot - Layer \(selectedLayer + 1)") {
+            VStack(alignment: .leading, spacing: 16) {
+                stepList
+
+                Divider()
+
+                ActionEditor(
+                    direction: selectedDirection,
+                    action: stepBinding(at: clampedSelectedStep)
+                )
+            }
+        }
+    }
+
+    private var selectedSlot: QuickwheelSlot {
+        settingsStore.settings.slot(layerIndex: selectedLayer, direction: selectedDirection)
+    }
+
+    private var clampedSelectedStep: Int {
+        selectedSlot.steps.indices.contains(selectedStep) ? selectedStep : 0
+    }
+
+    private var stepList: some View {
+        let slot = selectedSlot
+
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Trigger Pattern")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Spacer()
+
+                Button {
+                    addStep()
+                } label: {
+                    Label("Add Step", systemImage: "plus")
+                }
+                .controlSize(.small)
+            }
+
+            VStack(spacing: 4) {
+                ForEach(Array(slot.steps.enumerated()), id: \.element.id) { index, step in
+                    StepRow(
+                        index: index,
+                        stepCount: slot.steps.count,
+                        step: step,
+                        direction: selectedDirection,
+                        isSelected: index == clampedSelectedStep,
+                        onSelect: { selectedStep = index },
+                        onMoveUp: { moveStep(at: index, offset: -1) },
+                        onMoveDown: { moveStep(at: index, offset: 1) },
+                        onDelete: { removeStep(at: index) }
+                    )
+                }
+            }
+
+            if slot.steps.count > 1 {
+                Text("Each trigger runs the next step, then wraps back to step 1. The position is remembered across restarts.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 
@@ -152,24 +234,73 @@ struct PreferencesView: View {
         )
     }
 
-    private func actionBinding(for direction: WheelDirection) -> Binding<QuickwheelAction> {
-        Binding(
+    private func stepBinding(at stepIndex: Int) -> Binding<QuickwheelAction> {
+        let layerIndex = selectedLayer
+        let direction = selectedDirection
+
+        return Binding(
             get: {
-                settingsStore.settings.action(for: direction)
+                settingsStore.settings.slot(layerIndex: layerIndex, direction: direction).step(at: stepIndex)
             },
             set: { newValue in
-                settingsStore.updateAction(newValue, for: direction)
+                settingsStore.update { settings in
+                    guard settings.layers.indices.contains(layerIndex) else { return }
+                    settings.layers[layerIndex].setStep(newValue, at: stepIndex, for: direction)
+                }
             }
         )
     }
 
-    private func loadPreset(_ preset: QuickwheelPreset) {
+    private func mutateSelectedSlot(_ mutate: (inout QuickwheelSlot) -> Void) {
+        let layerIndex = selectedLayer
+        let direction = selectedDirection
+
         settingsStore.update { settings in
-            settings.up = preset.settings.up
-            settings.down = preset.settings.down
-            settings.left = preset.settings.left
-            settings.right = preset.settings.right
+            guard settings.layers.indices.contains(layerIndex) else { return }
+            var slot = settings.layers[layerIndex].slot(for: direction)
+            mutate(&slot)
+            slot.clampSteps()
+            settings.layers[layerIndex].setSlot(slot, for: direction)
         }
+    }
+
+    private func addStep() {
+        mutateSelectedSlot { slot in
+            slot.steps.append(QuickwheelAction())
+        }
+        selectedStep = selectedSlot.steps.count - 1
+    }
+
+    private func removeStep(at index: Int) {
+        mutateSelectedSlot { slot in
+            guard slot.steps.indices.contains(index), slot.steps.count > 1 else { return }
+            slot.steps.remove(at: index)
+        }
+        selectedStep = min(clampedSelectedStep, selectedSlot.steps.count - 1)
+    }
+
+    private func moveStep(at index: Int, offset: Int) {
+        let destination = index + offset
+        mutateSelectedSlot { slot in
+            guard slot.steps.indices.contains(index), slot.steps.indices.contains(destination) else { return }
+            slot.steps.swapAt(index, destination)
+        }
+        selectedStep = destination
+    }
+
+    private func loadPreset(_ preset: QuickwheelPreset) {
+        let layerIndex = selectedLayer
+        settingsStore.update { settings in
+            guard settings.layers.indices.contains(layerIndex) else { return }
+            let presetLayer = preset.settings.layers.first ?? WheelLayer()
+            for direction in WheelDirection.allCases {
+                settings.layers[layerIndex].setSlot(
+                    presetLayer.slot(for: direction).withRegeneratedIDs(),
+                    for: direction
+                )
+            }
+        }
+        selectedStep = 0
     }
 }
 
@@ -192,9 +323,17 @@ private struct SettingsSection<Content: View>: View {
 
 private struct SlotSidebarButton: View {
     let direction: WheelDirection
-    let action: QuickwheelAction
+    let slot: QuickwheelSlot
     let isSelected: Bool
     let onSelect: () -> Void
+
+    private var action: QuickwheelAction {
+        slot.primaryAction
+    }
+
+    private var subtitle: String {
+        slot.steps.count > 1 ? "\(slot.steps.count) steps" : action.kind.displayName
+    }
 
     var body: some View {
         Button(action: onSelect) {
@@ -209,7 +348,7 @@ private struct SlotSidebarButton: View {
                     Text(action.resolvedTitle(fallback: direction))
                         .font(.system(size: 13, weight: .medium))
                         .lineLimit(1)
-                    Text(action.kind.displayName)
+                    Text(subtitle)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
@@ -225,6 +364,81 @@ private struct SlotSidebarButton: View {
             )
         }
         .buttonStyle(.plain)
+    }
+}
+
+private struct StepRow: View {
+    let index: Int
+    let stepCount: Int
+    let step: QuickwheelAction
+    let direction: WheelDirection
+    let isSelected: Bool
+    let onSelect: () -> Void
+    let onMoveUp: () -> Void
+    let onMoveDown: () -> Void
+    let onDelete: () -> Void
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Button(action: onSelect) {
+                HStack(spacing: 8) {
+                    Text("\(index + 1)")
+                        .font(.caption.weight(.semibold))
+                        .monospacedDigit()
+                        .frame(width: 18, height: 18)
+                        .background(
+                            isSelected ? Color.accentColor : Color.secondary.opacity(0.25),
+                            in: Circle()
+                        )
+                        .foregroundStyle(isSelected ? Color.white : Color.primary)
+
+                    SlotSidebarIcon(
+                        action: step,
+                        direction: direction,
+                        isSelected: isSelected
+                    )
+
+                    Text(step.resolvedTitle(fallback: direction))
+                        .font(.system(size: 12, weight: isSelected ? .semibold : .regular))
+                        .lineLimit(1)
+
+                    Text(step.kind.displayName)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+
+                    Spacer()
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            if stepCount > 1 {
+                HStack(spacing: 2) {
+                    Button(action: onMoveUp) {
+                        Image(systemName: "chevron.up")
+                    }
+                    .disabled(index == 0)
+
+                    Button(action: onMoveDown) {
+                        Image(systemName: "chevron.down")
+                    }
+                    .disabled(index == stepCount - 1)
+
+                    Button(role: .destructive, action: onDelete) {
+                        Image(systemName: "trash")
+                    }
+                }
+                .buttonStyle(.borderless)
+                .controlSize(.small)
+            }
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 5)
+        .background(
+            isSelected ? Color.accentColor.opacity(0.1) : Color.clear,
+            in: RoundedRectangle(cornerRadius: 6)
+        )
     }
 }
 
@@ -279,9 +493,6 @@ private struct ActionEditor: View {
                         .textFieldStyle(.roundedBorder)
                 }
 
-                SymbolField(title: "Icon", text: $action.iconName, allowsAutomaticIcon: true)
-                    .frame(width: 210)
-
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Template")
                         .font(.caption)
@@ -289,7 +500,11 @@ private struct ActionEditor: View {
                     Menu {
                         ForEach(actionTemplates) { template in
                             Button {
-                                action = template
+                                // Fresh id so repeated template loads never
+                                // collide in the step list's ForEach identity.
+                                var loadedAction = template
+                                loadedAction.id = UUID()
+                                action = loadedAction
                             } label: {
                                 Label(template.title, systemImage: template.resolvedSymbol(fallback: direction))
                             }
@@ -299,6 +514,13 @@ private struct ActionEditor: View {
                     }
                     .menuStyle(.button)
                 }
+            }
+
+            HStack(alignment: .top, spacing: 14) {
+                SymbolField(title: "Icon", text: $action.iconName, allowsAutomaticIcon: true)
+                    .frame(width: 210)
+
+                IconWell(action: $action, direction: direction)
             }
 
             Picker("Action Type", selection: $action.kind) {
@@ -414,6 +636,124 @@ private struct ActionEditor: View {
         if action.iconName.trimmedForQuickwheel == ActionKind.launchApp.symbolName {
             action.iconName = ""
         }
+    }
+}
+
+private struct IconWell: View {
+    @Binding var action: QuickwheelAction
+    let direction: WheelDirection
+    @State private var isDropTargeted = false
+
+    private var customImage: NSImage? {
+        guard !action.iconImagePath.trimmedForQuickwheel.isEmpty else { return nil }
+        return QuickwheelIconStore.image(forIconPath: action.iconImagePath)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Image")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            HStack(spacing: 8) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .fill(Color(nsColor: .textBackgroundColor))
+
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .strokeBorder(
+                            isDropTargeted ? Color.accentColor : Color.secondary.opacity(0.35),
+                            style: StrokeStyle(lineWidth: 1, dash: customImage == nil ? [4] : [])
+                        )
+
+                    if let customImage {
+                        Image(nsImage: customImage)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .padding(3)
+                            .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+                    } else {
+                        Image(systemName: "photo")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .frame(width: 48, height: 48)
+                .onDrop(of: [.fileURL], isTargeted: $isDropTargeted) { providers in
+                    handleDrop(providers)
+                }
+                .accessibilityLabel("Custom icon image")
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Button("Choose...") {
+                        chooseImage()
+                    }
+                    .controlSize(.small)
+
+                    Button("Clear") {
+                        action.iconImagePath = ""
+                    }
+                    .controlSize(.small)
+                    .disabled(action.iconImagePath.trimmedForQuickwheel.isEmpty)
+                }
+            }
+
+            Text("Drop or choose an image. It overrides the SF Symbol.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private func chooseImage() {
+        let panel = NSOpenPanel()
+        panel.title = "Choose Icon Image"
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = false
+        panel.allowedContentTypes = [.image]
+
+        guard panel.runModal() == .OK, let url = panel.url else {
+            return
+        }
+
+        importImage(from: url)
+    }
+
+    private func handleDrop(_ providers: [NSItemProvider]) -> Bool {
+        guard let provider = providers.first(where: {
+            $0.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier)
+        }) else {
+            return false
+        }
+
+        provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier, options: nil) { item, _ in
+            let url: URL? = if let data = item as? Data {
+                URL(dataRepresentation: data, relativeTo: nil)
+            } else if let itemURL = item as? URL {
+                itemURL
+            } else {
+                nil
+            }
+
+            guard let url else { return }
+            DispatchQueue.main.async {
+                importImage(from: url)
+            }
+        }
+
+        return true
+    }
+
+    private func importImage(from url: URL) {
+        guard
+            NSImage(contentsOf: url) != nil,
+            let iconPath = try? QuickwheelIconStore.importImage(from: url)
+        else {
+            NSSound.beep()
+            return
+        }
+
+        action.iconImagePath = iconPath
     }
 }
 

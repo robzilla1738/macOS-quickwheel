@@ -4,10 +4,12 @@ import SwiftUI
 
 final class OverlayWindowController {
     private let model = RadialOverlayModel()
+    private let settingsStore: SettingsStore
     private var settingsCancellable: AnyCancellable?
     private lazy var panel: NSPanel = makePanel()
 
     init(settingsStore: SettingsStore) {
+        self.settingsStore = settingsStore
         model.settings = settingsStore.settings
         settingsCancellable = settingsStore.$settings
             .receive(on: DispatchQueue.main)
@@ -16,7 +18,10 @@ final class OverlayWindowController {
             }
     }
 
-    func show(centeredAt point: NSPoint) {
+    func show(centeredAt point: NSPoint, layerIndex: Int = 0) {
+        model.activeLayerIndex = model.settings.clampedLayerIndex(layerIndex)
+        refreshCycleIndices()
+
         let overlaySize = model.overlaySize
         let origin = NSPoint(
             x: point.x - overlaySize.width / 2,
@@ -24,6 +29,15 @@ final class OverlayWindowController {
         )
         panel.setFrame(NSRect(origin: origin, size: overlaySize), display: true)
         panel.orderFrontRegardless()
+    }
+
+    private func refreshCycleIndices() {
+        var cycleIndices: [WheelDirection: Int] = [:]
+        for direction in WheelDirection.allCases {
+            let slot = model.settings.slot(layerIndex: model.activeLayerIndex, direction: direction)
+            cycleIndices[direction] = settingsStore.cycleIndex(forSlotID: slot.id, stepCount: slot.steps.count)
+        }
+        model.cycleIndices = cycleIndices
     }
 
     func updateSelection(_ direction: WheelDirection?) {

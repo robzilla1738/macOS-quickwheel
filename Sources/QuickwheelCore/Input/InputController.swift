@@ -10,8 +10,21 @@ final class InputController {
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
     private var heldModifierKeyCodes = Set<Int64>()
+    private var heldDigitKeyCode: Int64?
+    private var activeLayerIndex = 0
     private var menuCenter: CGPoint?
     private var currentDirection: WheelDirection?
+
+    private static let layerDigitKeyCodes: [Int64: Int] = [
+        Int64(kVK_ANSI_1): 1,
+        Int64(kVK_ANSI_2): 2,
+        Int64(kVK_ANSI_3): 3
+    ]
+
+    static func layerIndex(forHeldDigit digit: Int?, layerCount: Int) -> Int {
+        guard let digit, layerCount > 0 else { return 0 }
+        return min(max(digit - 1, 0), layerCount - 1)
+    }
 
     var isRunning: Bool {
         guard let eventTap else { return false }
@@ -47,7 +60,8 @@ final class InputController {
             CGEventMask(1 << CGEventType.leftMouseDragged.rawValue) |
             CGEventMask(1 << CGEventType.leftMouseUp.rawValue) |
             CGEventMask(1 << CGEventType.mouseMoved.rawValue) |
-            CGEventMask(1 << CGEventType.keyDown.rawValue)
+            CGEventMask(1 << CGEventType.keyDown.rawValue) |
+            CGEventMask(1 << CGEventType.keyUp.rawValue)
 
         let userInfo = Unmanaged.passUnretained(self).toOpaque()
         guard let tap = CGEvent.tapCreate(
@@ -85,6 +99,8 @@ final class InputController {
 
         eventTap = nil
         runLoopSource = nil
+        heldModifierKeyCodes.removeAll()
+        heldDigitKeyCode = nil
         resetGestureState()
     }
 
@@ -94,6 +110,9 @@ final class InputController {
             if let eventTap {
                 CGEvent.tapEnable(tap: eventTap, enable: true)
             }
+            // Key-up events may have been dropped while the tap was disabled.
+            heldModifierKeyCodes.removeAll()
+            heldDigitKeyCode = nil
             return event
 
         case .flagsChanged:
@@ -116,12 +135,28 @@ final class InputController {
             return nil
 
         case .keyDown:
-            guard menuCenter != nil else { return event }
             let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
+
+            guard menuCenter != nil else {
+                // Record (never swallow) layer digits held alongside the
+                // trigger modifier so the next click opens that layer.
+                if Self.layerDigitKeyCodes[keyCode] != nil, triggerModifierIsDown {
+                    heldDigitKeyCode = keyCode
+                }
+                return event
+            }
+
             if keyCode == kVK_Escape {
                 cancelGesture()
             }
             return nil
+
+        case .keyUp:
+            let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
+            if keyCode == heldDigitKeyCode {
+                heldDigitKeyCode = nil
+            }
+            return event
 
         default:
             return event
@@ -156,6 +191,10 @@ final class InputController {
         } else {
             heldModifierKeyCodes.remove(keyCode)
         }
+
+        if !triggerModifierIsDown {
+            heldDigitKeyCode = nil
+        }
     }
 
     private func modifierFamilyIsActive(keyCode: Int64, flags: CGEventFlags) -> Bool {
@@ -176,7 +215,12 @@ final class InputController {
     private func beginGesture(at location: CGPoint) {
         menuCenter = location
         currentDirection = nil
-        overlayController.show(centeredAt: location)
+        let heldDigit = heldDigitKeyCode.flatMap { Self.layerDigitKeyCodes[$0] }
+        activeLayerIndex = Self.layerIndex(
+            forHeldDigit: heldDigit,
+            layerCount: settingsStore.settings.layers.count
+        )
+        overlayController.show(centeredAt: location, layerIndex: activeLayerIndex)
         overlayController.updateGesture(
             selection: nil,
             dragVector: CGVector(dx: 0, dy: 0)
@@ -200,11 +244,13 @@ final class InputController {
         updateGesture(at: location)
 
         let directionToRun = currentDirection
+        let layerIndex = activeLayerIndex
         resetGestureState()
 
         guard let direction = directionToRun else { return }
-        let action = settingsStore.settings.action(for: direction)
-        actionRunner.run(action)
+        let slot = settingsStore.settings.slot(layerIndex: layerIndex, direction: direction)
+        let stepIndex = settingsStore.advanceCycle(forSlotID: slot.id, stepCount: slot.steps.count)
+        actionRunner.run(slot.step(at: stepIndex))
     }
 
     private func cancelGesture() {

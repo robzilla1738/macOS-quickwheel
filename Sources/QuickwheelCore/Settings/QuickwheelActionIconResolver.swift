@@ -3,6 +3,11 @@ import Foundation
 
 enum QuickwheelActionIconResolver {
     static func image(for action: QuickwheelAction) -> NSImage? {
+        if !action.iconImagePath.trimmedForQuickwheel.isEmpty,
+           let customImage = QuickwheelIconStore.image(forIconPath: action.iconImagePath) {
+            return customImage
+        }
+
         guard action.iconName.trimmedForQuickwheel.isEmpty else {
             return nil
         }

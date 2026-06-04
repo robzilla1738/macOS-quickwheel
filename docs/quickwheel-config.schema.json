@@ -3,22 +3,57 @@
   "title": "Quickwheel Configuration",
   "type": "object",
   "properties": {
-    "schemaVersion": { "type": "integer", "const": 1 },
+    "schemaVersion": { "type": "integer", "enum": [1, 2] },
     "name": { "type": "string" },
     "mode": { "type": "string", "enum": ["replace", "merge"] },
     "settings": { "$ref": "#/$defs/settings" },
-    "slots": { "$ref": "#/$defs/slots" }
+    "slots": { "$ref": "#/$defs/slots" },
+    "layers": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/layer" },
+      "maxItems": 3
+    }
   },
   "$defs": {
     "slots": {
       "type": "object",
       "properties": {
-        "up": { "$ref": "#/$defs/action" },
-        "down": { "$ref": "#/$defs/action" },
-        "left": { "$ref": "#/$defs/action" },
-        "right": { "$ref": "#/$defs/action" }
+        "up": { "$ref": "#/$defs/slot" },
+        "down": { "$ref": "#/$defs/slot" },
+        "left": { "$ref": "#/$defs/slot" },
+        "right": { "$ref": "#/$defs/slot" }
       },
       "additionalProperties": false
+    },
+    "layer": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "up": { "$ref": "#/$defs/slot" },
+        "down": { "$ref": "#/$defs/slot" },
+        "left": { "$ref": "#/$defs/slot" },
+        "right": { "$ref": "#/$defs/slot" }
+      },
+      "additionalProperties": false
+    },
+    "slot": {
+      "oneOf": [
+        { "$ref": "#/$defs/action" },
+        {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "steps": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/action" },
+              "minItems": 1
+            }
+          },
+          "required": ["steps"],
+          "additionalProperties": false
+        }
+      ]
     },
     "settings": {
       "type": "object",
@@ -33,6 +68,11 @@
         "deadZoneRadius": { "type": "number", "minimum": 12, "maximum": 120 },
         "overlaySize": { "type": "number", "minimum": 144, "maximum": 260 },
         "showOverlayLabels": { "type": "boolean", "default": false },
+        "layers": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/layer" },
+          "maxItems": 3
+        },
         "up": { "$ref": "#/$defs/action" },
         "down": { "$ref": "#/$defs/action" },
         "left": { "$ref": "#/$defs/action" },
@@ -43,8 +83,10 @@
     "action": {
       "type": "object",
       "properties": {
+        "id": { "type": "string" },
         "title": { "type": "string" },
         "iconName": { "type": "string" },
+        "iconImagePath": { "type": "string", "description": "Custom icon image. Relative paths resolve against the Quickwheel configuration folder." },
         "kind": {
           "type": "string",
           "enum": ["none", "openURL", "openFile", "revealInFinder", "launchApp", "shellCommand", "appleScript", "pasteText", "keyboardShortcut"]

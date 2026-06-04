@@ -30,14 +30,18 @@ Expected result:
 
 ## Distribution Notes
 
-The local packaging script ad-hoc signs the app so it can be tested on this machine. Public distribution should use a Developer ID certificate and Apple notarization.
+The local packaging script ad-hoc signs the app so it can be tested on this machine. Public distribution uses a Developer ID certificate and Apple notarization via the release script.
 
 Recommended release flow:
 
 ```sh
 scripts/verify.sh
-# archive/sign/notarize with Developer ID outside the local helper
+scripts/release.sh   # build, Developer ID sign (hardened runtime), notarize, staple, zip
 ```
+
+`scripts/release.sh` expects a `Developer ID Application` identity in the keychain and notarytool credentials stored under the `notarytool` keychain profile (override with `SIGNING_IDENTITY` / `NOTARY_PROFILE`). It produces `build/Quickwheel-<version>.zip` ready for upload.
+
+Before tagging a release, bump `CFBundleShortVersionString`/`CFBundleVersion` in both `project.yml` and `Resources/Info.plist` (xcodegen regenerates the plist from `project.yml`).
 
 ## Security Notes
 

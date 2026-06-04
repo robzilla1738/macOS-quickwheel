@@ -51,15 +51,25 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func runDirectionFromMenu(_ sender: NSMenuItem) {
-        guard
-            let rawDirection = sender.representedObject as? String,
-            let direction = WheelDirection(rawValue: rawDirection)
-        else {
-            return
+        guard let rawValue = sender.representedObject as? String else { return }
+
+        let components = rawValue.split(separator: ":", maxSplits: 1)
+        let layerIndex: Int
+        let rawDirection: String
+
+        if components.count == 2, let parsedLayer = Int(components[0]) {
+            layerIndex = parsedLayer
+            rawDirection = String(components[1])
+        } else {
+            layerIndex = 0
+            rawDirection = rawValue
         }
 
-        let action = settingsStore.settings.action(for: direction)
-        actionRunner.run(action)
+        guard let direction = WheelDirection(rawValue: rawDirection) else { return }
+
+        let slot = settingsStore.settings.slot(layerIndex: layerIndex, direction: direction)
+        let stepIndex = settingsStore.advanceCycle(forSlotID: slot.id, stepCount: slot.steps.count)
+        actionRunner.run(slot.step(at: stepIndex))
     }
 
     @objc private func loadPresetFromMenu(_ sender: NSMenuItem) {
@@ -71,10 +81,14 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         settingsStore.update { settings in
-            settings.up = preset.settings.up
-            settings.down = preset.settings.down
-            settings.left = preset.settings.left
-            settings.right = preset.settings.right
+            guard !settings.layers.isEmpty else { return }
+            let presetLayer = preset.settings.layers.first ?? WheelLayer()
+            for direction in WheelDirection.allCases {
+                settings.layers[0].setSlot(
+                    presetLayer.slot(for: direction).withRegeneratedIDs(),
+                    for: direction
+                )
+            }
         }
     }
 
@@ -215,22 +229,61 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         triggerItem.isEnabled = false
         menu.addItem(triggerItem)
 
-        let runMenu = NSMenu()
-        for direction in WheelDirection.allCases {
-            let action = settings.action(for: direction)
-            let item = NSMenuItem(
-                title: "\(action.resolvedTitle(fallback: direction)) - \(action.kind.displayName)",
-                action: #selector(runDirectionFromMenu(_:)),
+        if settings.usesMultipleLayers {
+            let layerHintItem = NSMenuItem(
+                title: "Hold 1, 2, or 3 to pick a layer",
+                action: nil,
                 keyEquivalent: ""
             )
-            item.target = self
-            item.representedObject = direction.rawValue
-            item.image = statusImage(
-                named: action.resolvedSymbol(fallback: direction),
-                accessibilityDescription: action.resolvedTitle(fallback: direction)
-            )
-            item.isEnabled = action.isRunnable
-            runMenu.addItem(item)
+            layerHintItem.image = statusImage(named: "square.3.layers.3d", accessibilityDescription: "Layers")
+            layerHintItem.isEnabled = false
+            menu.addItem(layerHintItem)
+        }
+
+        let runMenu = NSMenu()
+        let showsAllLayers = settings.usesMultipleLayers
+
+        for (layerIndex, layer) in settings.layers.enumerated() {
+            if layerIndex > 0, !showsAllLayers {
+                break
+            }
+
+            let directionItems = WheelDirection.allCases.map { direction -> NSMenuItem in
+                let slot = layer.slot(for: direction)
+                let action = slot.primaryAction
+                var title = "\(action.resolvedTitle(fallback: direction)) - \(action.kind.displayName)"
+                if slot.steps.count > 1 {
+                    title = "\(action.resolvedTitle(fallback: direction)) - \(slot.steps.count) steps"
+                }
+
+                let item = NSMenuItem(
+                    title: title,
+                    action: #selector(runDirectionFromMenu(_:)),
+                    keyEquivalent: ""
+                )
+                item.target = self
+                item.representedObject = "\(layerIndex):\(direction.rawValue)"
+                item.image = statusImage(
+                    named: action.resolvedSymbol(fallback: direction),
+                    accessibilityDescription: action.resolvedTitle(fallback: direction)
+                )
+                item.isEnabled = slot.isRunnable
+                return item
+            }
+
+            if showsAllLayers {
+                let layerMenu = NSMenu()
+                directionItems.forEach { layerMenu.addItem($0) }
+                let layerItem = NSMenuItem(title: layer.name, action: nil, keyEquivalent: "")
+                layerItem.image = statusImage(
+                    named: "\(layerIndex + 1).circle",
+                    accessibilityDescription: layer.name
+                )
+                layerItem.submenu = layerMenu
+                runMenu.addItem(layerItem)
+            } else {
+                directionItems.forEach { runMenu.addItem($0) }
+            }
         }
 
         let runItem = NSMenuItem(title: "Run Action", action: nil, keyEquivalent: "")

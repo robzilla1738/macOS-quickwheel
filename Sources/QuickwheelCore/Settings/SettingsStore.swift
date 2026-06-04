@@ -124,6 +124,7 @@ struct QuickwheelAction: Codable, Equatable, Identifiable {
     var id = UUID()
     var title = ""
     var iconName = ""
+    var iconImagePath = ""
     var kind: ActionKind = .none
     var urlString = ""
     var filePath = ""
@@ -220,6 +221,7 @@ struct QuickwheelAction: Codable, Equatable, Identifiable {
         title: String,
         iconName: String,
         kind: ActionKind,
+        iconImagePath: String = "",
         urlString: String = "",
         filePath: String = "",
         bundleIdentifier: String = "",
@@ -232,6 +234,7 @@ struct QuickwheelAction: Codable, Equatable, Identifiable {
     ) {
         self.title = title
         self.iconName = iconName
+        self.iconImagePath = iconImagePath
         self.kind = kind
         self.urlString = urlString
         self.filePath = filePath
@@ -254,6 +257,7 @@ struct QuickwheelAction: Codable, Equatable, Identifiable {
         case id
         case title
         case iconName
+        case iconImagePath
         case kind
         case urlString
         case filePath
@@ -276,6 +280,7 @@ struct QuickwheelAction: Codable, Equatable, Identifiable {
         id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
         title = try container.decodeIfPresent(String.self, forKey: .title) ?? ""
         iconName = try container.decodeIfPresent(String.self, forKey: .iconName) ?? ""
+        iconImagePath = try container.decodeIfPresent(String.self, forKey: .iconImagePath) ?? ""
         kind = try container.decodeIfPresent(ActionKind.self, forKey: .kind) ?? .none
         urlString = try container.decodeIfPresent(String.self, forKey: .urlString) ?? ""
         filePath = try container.decodeIfPresent(String.self, forKey: .filePath) ?? ""
@@ -294,6 +299,147 @@ struct QuickwheelAction: Codable, Equatable, Identifiable {
             shortcutKeyCode = parsedShortcut.keyCode
             shortcutModifiers = parsedShortcut.modifiers
         }
+    }
+}
+
+struct QuickwheelSlot: Codable, Equatable, Identifiable {
+    var id = UUID()
+    var steps: [QuickwheelAction] = [QuickwheelAction()]
+
+    var primaryAction: QuickwheelAction {
+        steps.first ?? QuickwheelAction()
+    }
+
+    var isRunnable: Bool {
+        steps.contains { $0.isRunnable }
+    }
+
+    init() {}
+
+    init(action: QuickwheelAction) {
+        steps = [action]
+    }
+
+    init(steps: [QuickwheelAction]) {
+        self.steps = steps.isEmpty ? [QuickwheelAction()] : steps
+    }
+
+    func step(at index: Int) -> QuickwheelAction {
+        guard steps.indices.contains(index) else { return primaryAction }
+        return steps[index]
+    }
+
+    mutating func clampSteps() {
+        if steps.isEmpty {
+            steps = [QuickwheelAction()]
+        }
+    }
+
+    /// A copy with fresh identities, for loading shared presets/templates so
+    /// slots never collide on id (used for SwiftUI identity and cycle state).
+    func withRegeneratedIDs() -> QuickwheelSlot {
+        var slot = self
+        slot.id = UUID()
+        slot.steps = slot.steps.map { step in
+            var step = step
+            step.id = UUID()
+            return step
+        }
+        return slot
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case steps
+    }
+
+    init(from decoder: Decoder) throws {
+        if let container = try? decoder.container(keyedBy: CodingKeys.self), container.contains(.steps) {
+            id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+            let decodedSteps = try container.decodeIfPresent([QuickwheelAction].self, forKey: .steps) ?? []
+            steps = decodedSteps.isEmpty ? [QuickwheelAction()] : decodedSteps
+        } else {
+            let action = try QuickwheelAction(from: decoder)
+            id = UUID()
+            steps = [action]
+        }
+    }
+}
+
+struct WheelLayer: Codable, Equatable, Identifiable {
+    var id = UUID()
+    var name = ""
+    var up = QuickwheelSlot()
+    var down = QuickwheelSlot()
+    var left = QuickwheelSlot()
+    var right = QuickwheelSlot()
+
+    var hasRunnableSlot: Bool {
+        WheelDirection.allCases.contains { slot(for: $0).isRunnable }
+    }
+
+    init() {}
+
+    init(
+        name: String = "",
+        up: QuickwheelAction = QuickwheelAction(),
+        down: QuickwheelAction = QuickwheelAction(),
+        left: QuickwheelAction = QuickwheelAction(),
+        right: QuickwheelAction = QuickwheelAction()
+    ) {
+        self.name = name
+        self.up = QuickwheelSlot(action: up)
+        self.down = QuickwheelSlot(action: down)
+        self.left = QuickwheelSlot(action: left)
+        self.right = QuickwheelSlot(action: right)
+    }
+
+    func slot(for direction: WheelDirection) -> QuickwheelSlot {
+        switch direction {
+        case .up: up
+        case .down: down
+        case .left: left
+        case .right: right
+        }
+    }
+
+    mutating func setSlot(_ slot: QuickwheelSlot, for direction: WheelDirection) {
+        switch direction {
+        case .up:
+            up = slot
+        case .down:
+            down = slot
+        case .left:
+            left = slot
+        case .right:
+            right = slot
+        }
+    }
+
+    mutating func setStep(_ action: QuickwheelAction, at index: Int, for direction: WheelDirection) {
+        var updatedSlot = slot(for: direction)
+        guard updatedSlot.steps.indices.contains(index) else { return }
+        updatedSlot.steps[index] = action
+        setSlot(updatedSlot, for: direction)
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case up
+        case down
+        case left
+        case right
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        name = try container.decodeIfPresent(String.self, forKey: .name) ?? ""
+        up = try container.decodeIfPresent(QuickwheelSlot.self, forKey: .up) ?? QuickwheelSlot()
+        down = try container.decodeIfPresent(QuickwheelSlot.self, forKey: .down) ?? QuickwheelSlot()
+        left = try container.decodeIfPresent(QuickwheelSlot.self, forKey: .left) ?? QuickwheelSlot()
+        right = try container.decodeIfPresent(QuickwheelSlot.self, forKey: .right) ?? QuickwheelSlot()
     }
 }
 
@@ -369,6 +515,8 @@ enum TriggerModifier: String, CaseIterable, Codable, Identifiable {
 }
 
 struct QuickwheelSettings: Codable, Equatable {
+    static let layerCount = 3
+
     var isEnabled = true
     var triggerModifier = TriggerModifier.leftCommand
     var menuBarSymbolName = "command.circle"
@@ -376,10 +524,27 @@ struct QuickwheelSettings: Codable, Equatable {
     var deadZoneRadius = 36.0
     var overlaySize = 184.0
     var showOverlayLabels = false
-    var up = QuickwheelAction()
-    var down = QuickwheelAction()
-    var left = QuickwheelAction()
-    var right = QuickwheelAction()
+    var layers: [WheelLayer] = [WheelLayer(), WheelLayer(), WheelLayer()]
+
+    var up: QuickwheelAction {
+        get { action(for: .up) }
+        set { setAction(newValue, for: .up) }
+    }
+
+    var down: QuickwheelAction {
+        get { action(for: .down) }
+        set { setAction(newValue, for: .down) }
+    }
+
+    var left: QuickwheelAction {
+        get { action(for: .left) }
+        set { setAction(newValue, for: .left) }
+    }
+
+    var right: QuickwheelAction {
+        get { action(for: .right) }
+        set { setAction(newValue, for: .right) }
+    }
 
     static let defaults = QuickwheelSettings(
         up: QuickwheelAction(
@@ -417,25 +582,36 @@ struct QuickwheelSettings: Codable, Equatable {
     )
 
     func action(for direction: WheelDirection) -> QuickwheelAction {
-        switch direction {
-        case .up: up
-        case .down: down
-        case .left: left
-        case .right: right
-        }
+        slot(layerIndex: 0, direction: direction).primaryAction
+    }
+
+    func slot(layerIndex: Int, direction: WheelDirection) -> QuickwheelSlot {
+        guard layers.indices.contains(layerIndex) else { return QuickwheelSlot() }
+        return layers[layerIndex].slot(for: direction)
+    }
+
+    func clampedLayerIndex(_ layerIndex: Int) -> Int {
+        guard layers.indices.contains(layerIndex) else { return 0 }
+        return layerIndex
+    }
+
+    var usesMultipleLayers: Bool {
+        layers.dropFirst().contains { $0.hasRunnableSlot }
     }
 
     mutating func setAction(_ action: QuickwheelAction, for direction: WheelDirection) {
-        switch direction {
-        case .up:
-            up = action
-        case .down:
-            down = action
-        case .left:
-            left = action
-        case .right:
-            right = action
+        setAction(action, layerIndex: 0, for: direction)
+    }
+
+    mutating func setAction(_ action: QuickwheelAction, layerIndex: Int, for direction: WheelDirection) {
+        guard layers.indices.contains(layerIndex) else { return }
+        var updatedSlot = layers[layerIndex].slot(for: direction)
+        if updatedSlot.steps.isEmpty {
+            updatedSlot.steps = [action]
+        } else {
+            updatedSlot.steps[0] = action
         }
+        layers[layerIndex].setSlot(updatedSlot, for: direction)
     }
 
     mutating func clampEditableValues() {
@@ -449,6 +625,30 @@ struct QuickwheelSettings: Codable, Equatable {
         if centerSymbolName.trimmedForQuickwheel.isEmpty {
             centerSymbolName = "command"
         }
+
+        clampLayers()
+    }
+
+    private mutating func clampLayers() {
+        if layers.count > Self.layerCount {
+            layers = Array(layers.prefix(Self.layerCount))
+        }
+
+        while layers.count < Self.layerCount {
+            layers.append(WheelLayer())
+        }
+
+        for index in layers.indices {
+            if layers[index].name.trimmedForQuickwheel.isEmpty {
+                layers[index].name = "Layer \(index + 1)"
+            }
+
+            for direction in WheelDirection.allCases {
+                var slot = layers[index].slot(for: direction)
+                slot.clampSteps()
+                layers[index].setSlot(slot, for: direction)
+            }
+        }
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -459,6 +659,10 @@ struct QuickwheelSettings: Codable, Equatable {
         case deadZoneRadius
         case overlaySize
         case showOverlayLabels
+        case layers
+    }
+
+    private enum LegacyCodingKeys: String, CodingKey {
         case up
         case down
         case left
@@ -485,10 +689,32 @@ struct QuickwheelSettings: Codable, Equatable {
         self.deadZoneRadius = deadZoneRadius
         self.overlaySize = overlaySize
         self.showOverlayLabels = showOverlayLabels
-        self.up = up
-        self.down = down
-        self.left = left
-        self.right = right
+        self.layers = [
+            WheelLayer(up: up, down: down, left: left, right: right),
+            WheelLayer(),
+            WheelLayer()
+        ]
+        clampEditableValues()
+    }
+
+    init(
+        isEnabled: Bool = true,
+        triggerModifier: TriggerModifier = .leftCommand,
+        menuBarSymbolName: String = "command.circle",
+        centerSymbolName: String = "command",
+        deadZoneRadius: Double = 36,
+        overlaySize: Double = 184,
+        showOverlayLabels: Bool = false,
+        layers: [WheelLayer]
+    ) {
+        self.isEnabled = isEnabled
+        self.triggerModifier = triggerModifier
+        self.menuBarSymbolName = menuBarSymbolName
+        self.centerSymbolName = centerSymbolName
+        self.deadZoneRadius = deadZoneRadius
+        self.overlaySize = overlaySize
+        self.showOverlayLabels = showOverlayLabels
+        self.layers = layers
         clampEditableValues()
     }
 
@@ -501,10 +727,27 @@ struct QuickwheelSettings: Codable, Equatable {
         deadZoneRadius = try container.decodeIfPresent(Double.self, forKey: .deadZoneRadius) ?? 36
         overlaySize = try container.decodeIfPresent(Double.self, forKey: .overlaySize) ?? 184
         showOverlayLabels = try container.decodeIfPresent(Bool.self, forKey: .showOverlayLabels) ?? false
-        up = try container.decodeIfPresent(QuickwheelAction.self, forKey: .up) ?? QuickwheelAction()
-        down = try container.decodeIfPresent(QuickwheelAction.self, forKey: .down) ?? QuickwheelAction()
-        left = try container.decodeIfPresent(QuickwheelAction.self, forKey: .left) ?? QuickwheelAction()
-        right = try container.decodeIfPresent(QuickwheelAction.self, forKey: .right) ?? QuickwheelAction()
+
+        if let decodedLayers = try container.decodeIfPresent([WheelLayer].self, forKey: .layers), !decodedLayers.isEmpty {
+            layers = decodedLayers
+        } else {
+            let legacyContainer = try decoder.container(keyedBy: LegacyCodingKeys.self)
+            var firstLayer = WheelLayer()
+            firstLayer.up = QuickwheelSlot(
+                action: try legacyContainer.decodeIfPresent(QuickwheelAction.self, forKey: .up) ?? QuickwheelAction()
+            )
+            firstLayer.down = QuickwheelSlot(
+                action: try legacyContainer.decodeIfPresent(QuickwheelAction.self, forKey: .down) ?? QuickwheelAction()
+            )
+            firstLayer.left = QuickwheelSlot(
+                action: try legacyContainer.decodeIfPresent(QuickwheelAction.self, forKey: .left) ?? QuickwheelAction()
+            )
+            firstLayer.right = QuickwheelSlot(
+                action: try legacyContainer.decodeIfPresent(QuickwheelAction.self, forKey: .right) ?? QuickwheelAction()
+            )
+            layers = [firstLayer, WheelLayer(), WheelLayer()]
+        }
+
         clampEditableValues()
     }
 }
@@ -512,15 +755,18 @@ struct QuickwheelSettings: Codable, Equatable {
 final class SettingsStore: ObservableObject {
     private let userDefaults: UserDefaults
     private let storageKey: String
+    private let cycleStorageKey: String
 
     @Published private(set) var settings: QuickwheelSettings
 
     init(
         userDefaults: UserDefaults = .standard,
-        storageKey: String = "quickwheel.settings.v1"
+        storageKey: String = "quickwheel.settings.v1",
+        cycleStorageKey: String = "quickwheel.cycleIndices.v1"
     ) {
         self.userDefaults = userDefaults
         self.storageKey = storageKey
+        self.cycleStorageKey = cycleStorageKey
         settings = Self.loadSettings(from: userDefaults, key: storageKey)
     }
 
@@ -528,6 +774,26 @@ final class SettingsStore: ObservableObject {
         var updatedSettings = settings
         updatedSettings.setAction(action, for: direction)
         replaceSettings(updatedSettings)
+    }
+
+    func cycleIndex(forSlotID slotID: UUID, stepCount: Int) -> Int {
+        guard stepCount > 1 else { return 0 }
+        let storedIndex = cycleIndices()[slotID.uuidString] ?? 0
+        return ((storedIndex % stepCount) + stepCount) % stepCount
+    }
+
+    @discardableResult
+    func advanceCycle(forSlotID slotID: UUID, stepCount: Int) -> Int {
+        guard stepCount > 1 else { return 0 }
+        let index = cycleIndex(forSlotID: slotID, stepCount: stepCount)
+        var indices = cycleIndices()
+        indices[slotID.uuidString] = (index + 1) % stepCount
+        userDefaults.set(indices, forKey: cycleStorageKey)
+        return index
+    }
+
+    private func cycleIndices() -> [String: Int] {
+        (userDefaults.dictionary(forKey: cycleStorageKey) ?? [:]).compactMapValues { $0 as? Int }
     }
 
     func update(_ edit: (inout QuickwheelSettings) -> Void) {

@@ -5,10 +5,28 @@ final class RadialOverlayModel: ObservableObject {
     @Published var selectedDirection: WheelDirection?
     @Published var dragVector = CGVector(dx: 0, dy: 0)
     @Published var settings = QuickwheelSettings.defaults
+    @Published var activeLayerIndex = 0
+    @Published var cycleIndices: [WheelDirection: Int] = [:]
 
     var overlaySize: NSSize {
         let canvasSize = RadialOverlayLayout.canvasSize(for: settings.overlaySize)
         return NSSize(width: canvasSize, height: canvasSize)
+    }
+
+    func slot(for direction: WheelDirection) -> QuickwheelSlot {
+        settings.slot(layerIndex: settings.clampedLayerIndex(activeLayerIndex), direction: direction)
+    }
+
+    /// The step that will fire next for this direction, honoring the slot's cycle position.
+    func previewAction(for direction: WheelDirection) -> QuickwheelAction {
+        let slot = slot(for: direction)
+        return slot.step(at: cycleIndices[direction] ?? 0)
+    }
+
+    func stepBadge(for direction: WheelDirection) -> String? {
+        let slot = slot(for: direction)
+        guard slot.steps.count > 1 else { return nil }
+        return "\((cycleIndices[direction] ?? 0) + 1)/\(slot.steps.count)"
     }
 }
 
@@ -123,6 +141,10 @@ struct RadialOverlayView: View {
         min(max(wheelSize * 0.11, 17), 22)
     }
 
+    private var showsLayerIndicator: Bool {
+        model.activeLayerIndex > 0 || model.settings.usesMultipleLayers
+    }
+
     private var joystickTravelRadius: CGFloat {
         RadialOverlayLayout.joystickTravelRadius(
             wheelSize: wheelSize,
@@ -170,6 +192,24 @@ struct RadialOverlayView: View {
             Image(systemName: QuickwheelSymbol.validatedName(model.settings.centerSymbolName, fallback: "command"))
                 .font(.system(size: joystickIconSize, weight: .medium))
                 .foregroundStyle(.white.opacity(selected ? 0.96 : 0.78))
+
+            if showsLayerIndicator {
+                VStack {
+                    Spacer()
+                    HStack(spacing: 3) {
+                        ForEach(model.settings.layers.indices, id: \.self) { index in
+                            Circle()
+                                .fill(
+                                    index == model.activeLayerIndex
+                                        ? Color.white.opacity(0.95)
+                                        : Color.white.opacity(0.32)
+                                )
+                                .frame(width: 3.5, height: 3.5)
+                        }
+                    }
+                    .padding(.bottom, 6)
+                }
+            }
         }
         .frame(width: joystickDiameter, height: joystickDiameter)
         .shadow(color: .black.opacity(0.26), radius: 14, y: 8)
@@ -209,7 +249,8 @@ struct RadialOverlayView: View {
 
     private func directionSlot(_ direction: WheelDirection) -> some View {
         let selected = model.selectedDirection == direction
-        let action = model.settings.action(for: direction)
+        let action = model.previewAction(for: direction)
+        let stepBadge = model.stepBadge(for: direction)
         let diameter = selected ? selectedSlotDiameter : slotDiameter
 
         return VStack(spacing: 5) {
@@ -234,6 +275,18 @@ struct RadialOverlayView: View {
                 )
             }
             .frame(width: diameter, height: diameter)
+            .overlay(alignment: .bottomTrailing) {
+                if let stepBadge {
+                    Text(stepBadge)
+                        .font(.system(size: 8, weight: .semibold))
+                        .monospacedDigit()
+                        .foregroundStyle(.white.opacity(0.92))
+                        .padding(.horizontal, 4)
+                        .padding(.vertical, 1.5)
+                        .background(Color.black.opacity(0.55), in: Capsule())
+                        .offset(x: 4, y: 4)
+                }
+            }
             .shadow(
                 color: selected ? Color.accentColor.opacity(0.34) : Color.black.opacity(0.18),
                 radius: selected ? 12 : 8,
