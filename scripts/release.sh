@@ -34,7 +34,7 @@ VERSION="$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$APP_D
 ZIP_PATH="$ROOT_DIR/build/Quickwheel-$VERSION.zip"
 
 echo "==> Signing with: $SIGNING_IDENTITY"
-codesign --force --options runtime --timestamp \
+codesign --force --deep --options runtime --timestamp \
   --entitlements "$ENTITLEMENTS" \
   --sign "$SIGNING_IDENTITY" \
   "$APP_DIR"
@@ -52,5 +52,10 @@ spctl --assess --type execute --verbose=2 "$APP_DIR"
 echo "==> Repacking stapled app"
 rm -f "$ZIP_PATH"
 ditto -c -k --keepParent "$APP_DIR" "$ZIP_PATH"
+
+if [[ "${SKIP_APPCAST:-0}" != "1" ]]; then
+  echo "==> Updating Sparkle appcast"
+  "$ROOT_DIR/scripts/update_appcast.sh" "$ZIP_PATH" "v$VERSION"
+fi
 
 echo "Release artifact: $ZIP_PATH"

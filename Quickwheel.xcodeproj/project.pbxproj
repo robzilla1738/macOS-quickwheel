@@ -14,6 +14,7 @@
 		29C933B26D02B9F4AD202A21 /* PreferencesWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E206A5996288C7462F8909AC /* PreferencesWindowController.swift */; };
 		4725026C60855D163C67F551 /* MouseCoordinateConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15618D46F92DCF272A8EA37E /* MouseCoordinateConverter.swift */; };
 		4F60EE6DA775B2CC38179FE6 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65099DD99947F9B0ECDDC76D /* SettingsStore.swift */; };
+		50F97C45D85CA11C4C81ED06 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = C1E278848B3DFCDBB7172FF4 /* Sparkle */; };
 		6A316CE204FAEA6E07079F68 /* ActionRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DDF5D19B6D3D6EAD9DDDFC9 /* ActionRunner.swift */; };
 		738EC904F10202C199DB5E17 /* AccessibilityPermission.swift in Sources */ = {isa = PBXBuildFile; fileRef = A270112763B42D1957A913A6 /* AccessibilityPermission.swift */; };
 		772ABF004A8AF9A6B21AB9C1 /* QuickwheelShortcutParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72773EFC25F11598D646F0C2 /* QuickwheelShortcutParser.swift */; };
@@ -50,6 +51,17 @@
 		E206A5996288C7462F8909AC /* PreferencesWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesWindowController.swift; sourceTree = "<group>"; };
 		EF1C9119FFB6D55676EEE2E1 /* QuickwheelSymbol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickwheelSymbol.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		CCC15037584A9BAEB55232AE /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				50F97C45D85CA11C4C81ED06 /* Sparkle in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		023C716DF95C98C2D7A8C8D0 /* Overlay */ = {
@@ -175,6 +187,7 @@
 			buildPhases = (
 				EEB7F91C04222A611A6EF15C /* Sources */,
 				81861EE9443E4B32ECA4321E /* Resources */,
+				CCC15037584A9BAEB55232AE /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -182,6 +195,7 @@
 			);
 			name = Quickwheel;
 			packageProductDependencies = (
+				C1E278848B3DFCDBB7172FF4 /* Sparkle */,
 			);
 			productName = Quickwheel;
 			productReference = CCEFE1755B17F7FC2AB3855B /* Quickwheel.app */;
@@ -210,6 +224,9 @@
 			);
 			mainGroup = 85F8A66559E7A778CA8639EA;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				814FF8702777822A73F2E9FC /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 76667F30D16BF254162E4C47 /* Products */;
 			projectDirPath = "";
@@ -435,6 +452,25 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		814FF8702777822A73F2E9FC /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.8.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		C1E278848B3DFCDBB7172FF4 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 814FF8702777822A73F2E9FC /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 603D35B3809D5BE96C918DDB /* Project object */;
 }

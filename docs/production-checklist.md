@@ -14,6 +14,7 @@ Expected result:
 - Xcode Debug build succeeds.
 - `build/Quickwheel.app` is produced.
 - `codesign --verify --deep --strict build/Quickwheel.app` passes.
+- Sparkle is embedded in `build/Quickwheel.app/Contents/Frameworks`.
 
 ## Manual Smoke Test
 
@@ -40,6 +41,8 @@ scripts/release.sh   # build, Developer ID sign (hardened runtime), notarize, st
 ```
 
 `scripts/release.sh` expects a `Developer ID Application` identity in the keychain and notarytool credentials stored under the `notarytool` keychain profile (override with `SIGNING_IDENTITY` / `NOTARY_PROFILE`). It produces `build/Quickwheel-<version>.zip` ready for upload.
+
+The release script also regenerates `appcast.xml` for Sparkle using the local EdDSA signing key in Keychain. Upload the generated zip to the matching GitHub tag, commit the updated `appcast.xml`, and push `main` so installed apps can see the release feed.
 
 Before tagging a release, bump `CFBundleShortVersionString`/`CFBundleVersion` in both `project.yml` and `Resources/Info.plist` (xcodegen regenerates the plist from `project.yml`).
 

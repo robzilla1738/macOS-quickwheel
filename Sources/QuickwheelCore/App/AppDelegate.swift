@@ -1,9 +1,15 @@
 import AppKit
 import Combine
+import Sparkle
 import UniformTypeIdentifiers
 
 public final class AppDelegate: NSObject, NSApplicationDelegate {
     private let settingsStore = SettingsStore()
+    private lazy var updaterController = SPUStandardUpdaterController(
+        startingUpdater: true,
+        updaterDelegate: nil,
+        userDriverDelegate: nil
+    )
     private lazy var actionRunner = ActionRunner()
     private lazy var overlayController = OverlayWindowController(settingsStore: settingsStore)
     private lazy var preferencesController = PreferencesWindowController(settingsStore: settingsStore)
@@ -24,6 +30,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     public func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
         ensureConfigurationFolder()
+        _ = updaterController
         configureStatusItem()
         settingsCancellable = settingsStore.$settings
             .receive(on: DispatchQueue.main)
@@ -185,6 +192,10 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func checkAccessibilityFromMenu(_ sender: Any?) {
         checkAccessibilityAndStartInput(prompt: true)
+    }
+
+    @objc private func checkForUpdates(_ sender: Any?) {
+        updaterController.checkForUpdates(sender)
     }
 
     @objc private func quit(_ sender: Any?) {
@@ -379,6 +390,15 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         permissionItem.target = self
         permissionItem.image = statusImage(named: "hand.raised", accessibilityDescription: "Accessibility")
         menu.addItem(permissionItem)
+
+        let updatesItem = NSMenuItem(
+            title: "Check for Updates...",
+            action: #selector(checkForUpdates(_:)),
+            keyEquivalent: ""
+        )
+        updatesItem.target = self
+        updatesItem.image = statusImage(named: "arrow.down.circle", accessibilityDescription: "Check for Updates")
+        menu.addItem(updatesItem)
 
         menu.addItem(.separator())
 

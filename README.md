@@ -17,6 +17,7 @@ The default trigger is **Left Command + left click**. Press **1**, **2**, or **3
 3. Launch it and grant Accessibility permission when prompted (required for the global gesture).
 
 The app is Developer ID signed and notarized by Apple. Requires macOS 13.0 or later.
+Quickwheel checks for updates with Sparkle and uses the GitHub release feed configured in `appcast.xml`.
 
 ## Features
 
@@ -69,7 +70,7 @@ Local packaging and verification:
 ```sh
 scripts/build_app.sh  # build and ad-hoc sign build/Quickwheel.app
 scripts/verify.sh     # full local release gate
-scripts/release.sh    # Developer ID sign, notarize, staple, and zip
+scripts/release.sh    # Developer ID sign, notarize, staple, zip, and update appcast.xml
 ```
 
 The app requests Accessibility permission on launch. That permission is required for the global event tap and for swallowing the original click while the wheel is visible.

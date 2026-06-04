@@ -8,10 +8,16 @@ settings:
   base:
     SWIFT_VERSION: "5.0"
     MACOSX_DEPLOYMENT_TARGET: "13.0"
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: 2.8.0
 targets:
   Quickwheel:
     type: application
     platform: macOS
+    dependencies:
+      - package: Sparkle
     sources:
       - path: Sources/Quickwheel
       - path: Sources/QuickwheelCore
@@ -27,12 +33,15 @@ targets:
         CFBundleInfoDictionaryVersion: "6.0"
         CFBundleName: Quickwheel
         CFBundlePackageType: APPL
-        CFBundleShortVersionString: 0.2.1
-        CFBundleVersion: "3"
+        CFBundleShortVersionString: 0.2.2
+        CFBundleVersion: "4"
         LSMinimumSystemVersion: "13.0"
         LSUIElement: true
         NSAppleEventsUsageDescription: Quickwheel runs AppleScript actions that you configure, which may control other apps.
         NSHighResolutionCapable: true
+        SUEnableAutomaticChecks: true
+        SUFeedURL: https://raw.githubusercontent.com/robzilla1738/macOS-quickwheel/main/appcast.xml
+        SUPublicEDKey: 3LBPx8Uv5L5ptqRqdCWovmUIPLxcDEPnivy8cOpIlH8=
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.robertcourson.quickwheel
