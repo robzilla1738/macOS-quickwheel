@@ -259,6 +259,12 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
                 break
             }
 
+            // With up to nine layers, skip empty alternates so the Run Action
+            // menu lists only the primary layer plus the ones actually in use.
+            if layerIndex > 0, !layer.hasRunnableSlot {
+                continue
+            }
+
             let directionItems = WheelDirection.allCases.map { direction -> NSMenuItem in
                 let slot = layer.slot(for: direction)
                 let action = slot.primaryAction

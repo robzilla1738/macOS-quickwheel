@@ -45,7 +45,7 @@ Customize everything from the menu-bar item under **Customize Wheel...**:
 - Use **Add Step** in the Trigger Pattern section to make a slot cycle through multiple actions.
 - Drop an image onto the **Image** well (or click Choose...) to give an action a custom icon.
 
-> **Note on layer digits:** the 1/2/3 keys are never swallowed when pressed before clicking, so app shortcuts like ⌘1 still reach the frontmost app. Digits pressed while the wheel is already open are consumed by Quickwheel.
+> **Note on layer digits:** the 1–9 keys are never swallowed when pressed before clicking, so app shortcuts like ⌘1 still reach the frontmost app. Digits pressed while the wheel is already open are consumed by Quickwheel.
 
 ## Configuration for tools and AI agents
 

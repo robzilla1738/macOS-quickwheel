@@ -24,7 +24,7 @@ scripts/release.sh   # Developer ID sign, notarize, staple, zip
 
 - `InputController`: owns the global CGEvent tap, modifier and layer-digit tracking, mouse tracking, event swallowing, direction resolution, and cycle advancement on fire.
 - `OverlayWindowController`: owns the non-activating floating panel, passes gesture state into SwiftUI, and snapshots cycle indices when the wheel opens or the layer switches.
-- `RadialOverlayView`: renders the minimal joystick overlay, safe canvas padding, slots with next-step previews and step badges, layer indicator dots, hover state, and automatic icons.
+- `RadialOverlayView`: renders the minimal joystick overlay, safe canvas padding, slots with next-step previews and step badges, the active layer indicator, hover state, and automatic icons.
 - `SettingsStore`: persists Codable settings in UserDefaults, exposes starter presets, and tracks per-slot cycle positions (`quickwheel.cycleIndices.v1`).
 - `ActionRunner`: executes URLs, files, app launches, shell commands, AppleScript, paste text, and keyboard shortcuts.
 - `QuickwheelConfigurationDocument`: imports/exports JSON configs for external tools (schema v2: layers, multi-step slots, custom icon paths; v1 and legacy flat configs still load).

@@ -126,6 +126,21 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(InputController.layerIndex(forHeldDigit: 9, layerCount: 3), 2)
     }
 
+    func testDefaultsAndShortConfigsProvideNineLayers() throws {
+        XCTAssertEqual(QuickwheelSettings.layerCount, 9)
+        XCTAssertEqual(QuickwheelSettings.defaults.layers.count, 9)
+
+        // A config with fewer layers than the cap pads up to nine, preserving
+        // the supplied layers and leaving the appended ones empty.
+        let json = """
+        { "layers": [ { "name": "One" }, { "name": "Two" }, { "name": "Three" } ] }
+        """
+        let settings = try JSONDecoder().decode(QuickwheelSettings.self, from: Data(json.utf8))
+        XCTAssertEqual(settings.layers.count, 9)
+        XCTAssertEqual(settings.layers[0].name, "One")
+        XCTAssertFalse(settings.layers[8].hasRunnableSlot)
+    }
+
     func testActionIconImagePathRoundTrips() throws {
         var action = QuickwheelAction()
         action.kind = .openURL
