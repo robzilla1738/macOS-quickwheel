@@ -24,7 +24,7 @@ scripts/release.sh   # Developer ID sign, notarize, staple, zip
 
 - `InputController`: owns the global CGEvent tap, modifier and layer-digit tracking, mouse tracking, event swallowing, direction resolution, and cycle advancement on fire.
 - `OverlayWindowController`: owns the non-activating floating panel, passes gesture state into SwiftUI, and snapshots cycle indices when the wheel opens or the layer switches.
-- `RadialOverlayView`: renders the minimal joystick overlay, safe canvas padding, slots with next-step previews and step badges, layer indicator dots, hover state, and automatic icons.
+- `RadialOverlayView`: renders the minimal joystick overlay, safe canvas padding, slots with next-step previews and step badges, the active layer indicator, hover state, and automatic icons.
 - `SettingsStore`: persists Codable settings in UserDefaults, exposes starter presets, and tracks per-slot cycle positions (`quickwheel.cycleIndices.v1`).
 - `ActionRunner`: executes URLs, files, app launches, shell commands, AppleScript, paste text, and keyboard shortcuts.
 - `QuickwheelConfigurationDocument`: imports/exports JSON configs for external tools (schema v2: layers, multi-step slots, custom icon paths; v1 and legacy flat configs still load).
@@ -32,7 +32,7 @@ scripts/release.sh   # Developer ID sign, notarize, staple, zip
 
 ## Data Model
 
-`QuickwheelSettings.layers` holds three `WheelLayer`s; each layer has four `QuickwheelSlot`s (up/down/left/right); each slot holds one or more `QuickwheelAction` steps that cycle on each trigger. Legacy persisted settings with flat `up/down/left/right` actions decode into Layer 1 automatically, and `settings.up` etc. remain as conveniences over Layer 1's primary steps.
+`QuickwheelSettings.layers` holds nine `WheelLayer`s; each layer has four `QuickwheelSlot`s (up/down/left/right); each slot holds one or more `QuickwheelAction` steps that cycle on each trigger. Legacy persisted settings with flat `up/down/left/right` actions decode into Layer 1 automatically, and `settings.up` etc. remain as conveniences over Layer 1's primary steps.
 
 Cycle positions are runtime state, stored separately from settings (keyed by slot UUID) so they survive restarts without polluting exported configs.
 

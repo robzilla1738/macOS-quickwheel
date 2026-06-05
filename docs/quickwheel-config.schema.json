@@ -11,7 +11,7 @@
     "layers": {
       "type": "array",
       "items": { "$ref": "#/$defs/layer" },
-      "maxItems": 3
+      "maxItems": 9
     }
   },
   "$defs": {
@@ -47,7 +47,8 @@
             "steps": {
               "type": "array",
               "items": { "$ref": "#/$defs/action" },
-              "minItems": 1
+              "minItems": 1,
+              "maxItems": 4
             }
           },
           "required": ["steps"],
@@ -71,7 +72,7 @@
         "layers": {
           "type": "array",
           "items": { "$ref": "#/$defs/layer" },
-          "maxItems": 3
+          "maxItems": 9
         },
         "up": { "$ref": "#/$defs/action" },
         "down": { "$ref": "#/$defs/action" },

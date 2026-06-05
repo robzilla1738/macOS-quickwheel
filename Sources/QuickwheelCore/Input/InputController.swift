@@ -18,7 +18,13 @@ final class InputController {
     private static let layerDigitKeyCodes: [Int64: Int] = [
         Int64(kVK_ANSI_1): 1,
         Int64(kVK_ANSI_2): 2,
-        Int64(kVK_ANSI_3): 3
+        Int64(kVK_ANSI_3): 3,
+        Int64(kVK_ANSI_4): 4,
+        Int64(kVK_ANSI_5): 5,
+        Int64(kVK_ANSI_6): 6,
+        Int64(kVK_ANSI_7): 7,
+        Int64(kVK_ANSI_8): 8,
+        Int64(kVK_ANSI_9): 9
     ]
 
     static func layerIndex(forHeldDigit digit: Int?, layerCount: Int) -> Int {
@@ -149,7 +155,7 @@ final class InputController {
             if keyCode == kVK_Escape {
                 cancelGesture()
             } else if let digit = Self.layerDigitKeyCodes[keyCode] {
-                // Tapping 1/2/3 while the wheel is open switches layers live.
+                // Tapping 1–9 while the wheel is open switches layers live.
                 switchLayer(toDigit: digit)
             }
             return nil

@@ -233,11 +233,11 @@ enum QuickwheelConfigurationFiles {
 
     ## Layers
 
-    Quickwheel has three wheel layers. Modifier+click opens Layer 1; holding 1, 2, or 3 with the modifier opens that layer. `slots` entries apply to Layer 1. To configure every layer, provide a top-level `layers` array of layer objects, each with `name` and `up`/`down`/`left`/`right` slots.
+    Quickwheel has nine wheel layers. Modifier+click opens Layer 1; holding 1 through 9 with the modifier opens that layer. `slots` entries apply to Layer 1. To configure every layer, provide a top-level `layers` array of layer objects, each with `name` and `up`/`down`/`left`/`right` slots.
 
     ## Trigger patterns (multi-step slots)
 
-    A slot can be a single action object, or `{ "steps": [action, action, ...] }`. Each trigger runs the next step and wraps around; the cycle position survives restarts.
+    A slot can be a single action object, or `{ "steps": [action, action, ...] }` with up to four steps. Each trigger runs the next step and wraps around; the cycle position survives restarts.
 
     ```json
     {
@@ -275,7 +275,7 @@ enum QuickwheelConfigurationFiles {
         "layers": {
           "type": "array",
           "items": { "$ref": "#/$defs/layer" },
-          "maxItems": 3
+          "maxItems": 9
         }
       },
       "$defs": {
@@ -311,7 +311,8 @@ enum QuickwheelConfigurationFiles {
                 "steps": {
                   "type": "array",
                   "items": { "$ref": "#/$defs/action" },
-                  "minItems": 1
+                  "minItems": 1,
+                  "maxItems": 4
                 }
               },
               "required": ["steps"],
@@ -335,7 +336,7 @@ enum QuickwheelConfigurationFiles {
             "layers": {
               "type": "array",
               "items": { "$ref": "#/$defs/layer" },
-              "maxItems": 3
+              "maxItems": 9
             },
             "up": { "$ref": "#/$defs/action" },
             "down": { "$ref": "#/$defs/action" },
