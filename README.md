@@ -8,7 +8,7 @@
 
 Quickwheel is a macOS menu-bar utility for fast directional actions. Hold the activation modifier, left-click anywhere, flick toward a direction, and release to run that slot — a radial joystick for your most-used shortcuts, scripts, and apps.
 
-The default trigger is **Left Command + left click**. Press **1**, **2**, or **3** with the modifier held — before clicking or while the wheel is open — to switch wheel layers.
+The default trigger is **Left Command + left click**. Press **1**–**9** with the modifier held — before clicking or while the wheel is open — to switch wheel layers.
 
 ## Install
 
@@ -22,7 +22,7 @@ Quickwheel checks for updates with Sparkle and uses the GitHub release feed conf
 ## Features
 
 - **Radial flick gesture** — hold the modifier, click, flick up/down/left/right, release to fire. Release inside the dead zone to cancel.
-- **Nine wheel layers** — modifier+click opens Layer 1; press 1–9 before or during a gesture to switch layers (up to 36 actions). The wheel updates live and shows the active layer number.
+- **Nine wheel layers** — modifier+click opens Layer 1; press 1–9 before or during a gesture to switch layers (36 slots; up to 144 actions with trigger patterns). The wheel updates live and shows the active layer number.
 - **Trigger patterns** — a slot can hold up to four steps that cycle on each trigger (run A, then B, then back to A). Perfect for start/stop toggles like dictation or screen recording. The cycle position survives restarts, and the wheel previews the step that fires next.
 - **Eight action kinds** — open URL, open file/folder, reveal in Finder, launch app, shell command, AppleScript, paste text, and keyboard shortcut.
 - **Custom icons** — SF Symbols, automatic app/file icons, or any image via drag-and-drop onto the icon well in settings.
