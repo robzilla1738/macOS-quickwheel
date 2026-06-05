@@ -196,18 +196,14 @@ struct RadialOverlayView: View {
             if showsLayerIndicator {
                 VStack {
                     Spacer()
-                    HStack(spacing: 3) {
-                        ForEach(model.settings.layers.indices, id: \.self) { index in
-                            Circle()
-                                .fill(
-                                    index == model.activeLayerIndex
-                                        ? Color.white.opacity(0.95)
-                                        : Color.white.opacity(0.32)
-                                )
-                                .frame(width: 3.5, height: 3.5)
-                        }
-                    }
-                    .padding(.bottom, 6)
+                    Text("\(model.activeLayerIndex + 1)")
+                        .font(.system(size: 9, weight: .bold))
+                        .monospacedDigit()
+                        .foregroundStyle(.white.opacity(selected ? 0.96 : 0.82))
+                        .padding(.horizontal, 4.5)
+                        .padding(.vertical, 1)
+                        .background(Color.black.opacity(0.4), in: Capsule())
+                        .padding(.bottom, 5)
                 }
             }
         }

@@ -119,6 +119,11 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(InputController.layerIndex(forHeldDigit: 3, layerCount: 3), 2)
         XCTAssertEqual(InputController.layerIndex(forHeldDigit: 3, layerCount: 2), 1)
         XCTAssertEqual(InputController.layerIndex(forHeldDigit: 2, layerCount: 0), 0)
+
+        // Digits 4–9 reach the expanded layer range, and clamp when fewer layers exist.
+        XCTAssertEqual(InputController.layerIndex(forHeldDigit: 9, layerCount: 9), 8)
+        XCTAssertEqual(InputController.layerIndex(forHeldDigit: 7, layerCount: 9), 6)
+        XCTAssertEqual(InputController.layerIndex(forHeldDigit: 9, layerCount: 3), 2)
     }
 
     func testActionIconImagePathRoundTrips() throws {

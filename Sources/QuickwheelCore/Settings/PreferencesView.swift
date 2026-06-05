@@ -37,13 +37,14 @@ struct PreferencesView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Picker("Layer", selection: $selectedLayer) {
                     ForEach(0..<QuickwheelSettings.layerCount, id: \.self) { index in
-                        Text("\(index + 1)").tag(index)
+                        Text("Layer \(index + 1)").tag(index)
                     }
                 }
-                .pickerStyle(.segmented)
+                .pickerStyle(.menu)
                 .labelsHidden()
+                .frame(maxWidth: .infinity, alignment: .leading)
 
-                Text("\(settingsStore.settings.triggerModifier.displayName)+click opens Layer 1. Press 1, 2, or 3 before or during a gesture to switch layers.")
+                Text("\(settingsStore.settings.triggerModifier.displayName)+click opens Layer 1. Press 1–9 before or during a gesture to switch layers.")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)

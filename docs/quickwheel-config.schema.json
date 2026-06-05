@@ -11,7 +11,7 @@
     "layers": {
       "type": "array",
       "items": { "$ref": "#/$defs/layer" },
-      "maxItems": 3
+      "maxItems": 9
     }
   },
   "$defs": {
@@ -71,7 +71,7 @@
         "layers": {
           "type": "array",
           "items": { "$ref": "#/$defs/layer" },
-          "maxItems": 3
+          "maxItems": 9
         },
         "up": { "$ref": "#/$defs/action" },
         "down": { "$ref": "#/$defs/action" },

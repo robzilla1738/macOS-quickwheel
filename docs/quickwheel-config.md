@@ -95,10 +95,10 @@ Use `mode: "replace"` with `settings` when a file should replace the whole wheel
 
 ## Wheel Layers
 
-Quickwheel has three wheel layers, each with its own four directional slots:
+Quickwheel has nine wheel layers, each with its own four directional slots:
 
 - Modifier + click opens Layer 1.
-- Holding `1`, `2`, or `3` together with the modifier opens that layer.
+- Holding `1` through `9` together with the modifier opens that layer.
 - The digit key is never swallowed, so app shortcuts like `cmd+2` still reach the frontmost app.
 
 `slots` patches apply to Layer 1. To configure every layer, provide a top-level `layers` array (also valid inside `settings`):

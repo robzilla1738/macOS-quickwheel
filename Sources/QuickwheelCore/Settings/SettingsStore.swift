@@ -515,7 +515,7 @@ enum TriggerModifier: String, CaseIterable, Codable, Identifiable {
 }
 
 struct QuickwheelSettings: Codable, Equatable {
-    static let layerCount = 3
+    static let layerCount = 9
 
     var isEnabled = true
     var triggerModifier = TriggerModifier.leftCommand

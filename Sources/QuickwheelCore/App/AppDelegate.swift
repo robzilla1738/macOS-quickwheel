@@ -242,7 +242,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
 
         if settings.usesMultipleLayers {
             let layerHintItem = NSMenuItem(
-                title: "Hold 1, 2, or 3 to pick a layer",
+                title: "Hold 1–9 to pick a layer",
                 action: nil,
                 keyEquivalent: ""
             )

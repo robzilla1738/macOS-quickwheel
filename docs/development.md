@@ -32,7 +32,7 @@ scripts/release.sh   # Developer ID sign, notarize, staple, zip
 
 ## Data Model
 
-`QuickwheelSettings.layers` holds three `WheelLayer`s; each layer has four `QuickwheelSlot`s (up/down/left/right); each slot holds one or more `QuickwheelAction` steps that cycle on each trigger. Legacy persisted settings with flat `up/down/left/right` actions decode into Layer 1 automatically, and `settings.up` etc. remain as conveniences over Layer 1's primary steps.
+`QuickwheelSettings.layers` holds nine `WheelLayer`s; each layer has four `QuickwheelSlot`s (up/down/left/right); each slot holds one or more `QuickwheelAction` steps that cycle on each trigger. Legacy persisted settings with flat `up/down/left/right` actions decode into Layer 1 automatically, and `settings.up` etc. remain as conveniences over Layer 1's primary steps.
 
 Cycle positions are runtime state, stored separately from settings (keyed by slot UUID) so they survive restarts without polluting exported configs.
 
