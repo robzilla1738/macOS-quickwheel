@@ -119,7 +119,7 @@ Legacy configs that use top-level `up`/`down`/`left`/`right` in `settings` still
 
 ## Trigger Patterns (Multi-Step Slots)
 
-Anywhere a slot is accepted, it can be either a single action object or `{ "steps": [action, ...] }`. Each trigger runs the next step in order and wraps back to the first; the cycle position is persisted and survives app restarts.
+Anywhere a slot is accepted, it can be either a single action object or `{ "steps": [action, ...] }` with up to four steps. Each trigger runs the next step in order and wraps back to the first; the cycle position is persisted and survives app restarts.
 
 ```json
 {

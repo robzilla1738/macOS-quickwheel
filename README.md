@@ -23,7 +23,7 @@ Quickwheel checks for updates with Sparkle and uses the GitHub release feed conf
 
 - **Radial flick gesture** — hold the modifier, click, flick up/down/left/right, release to fire. Release inside the dead zone to cancel.
 - **Nine wheel layers** — modifier+click opens Layer 1; press 1–9 before or during a gesture to switch layers (up to 36 actions). The wheel updates live and shows the active layer number.
-- **Trigger patterns** — a slot can hold multiple steps that cycle on each trigger (run A, then B, then back to A). Perfect for start/stop toggles like dictation or screen recording. The cycle position survives restarts, and the wheel previews the step that fires next.
+- **Trigger patterns** — a slot can hold up to four steps that cycle on each trigger (run A, then B, then back to A). Perfect for start/stop toggles like dictation or screen recording. The cycle position survives restarts, and the wheel previews the step that fires next.
 - **Eight action kinds** — open URL, open file/folder, reveal in Finder, launch app, shell command, AppleScript, paste text, and keyboard shortcut.
 - **Custom icons** — SF Symbols, automatic app/file icons, or any image via drag-and-drop onto the icon well in settings.
 - **Custom activation modifier** — left/right/either Command, Option, Control, or Shift.

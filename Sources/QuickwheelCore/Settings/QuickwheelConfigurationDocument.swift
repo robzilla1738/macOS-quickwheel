@@ -237,7 +237,7 @@ enum QuickwheelConfigurationFiles {
 
     ## Trigger patterns (multi-step slots)
 
-    A slot can be a single action object, or `{ "steps": [action, action, ...] }`. Each trigger runs the next step and wraps around; the cycle position survives restarts.
+    A slot can be a single action object, or `{ "steps": [action, action, ...] }` with up to four steps. Each trigger runs the next step and wraps around; the cycle position survives restarts.
 
     ```json
     {
@@ -311,7 +311,8 @@ enum QuickwheelConfigurationFiles {
                 "steps": {
                   "type": "array",
                   "items": { "$ref": "#/$defs/action" },
-                  "minItems": 1
+                  "minItems": 1,
+                  "maxItems": 4
                 }
               },
               "required": ["steps"],

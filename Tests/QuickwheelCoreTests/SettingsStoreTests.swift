@@ -141,6 +141,33 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertFalse(settings.layers[8].hasRunnableSlot)
     }
 
+    func testClampStepsEnforcesMaximumOfFour() {
+        var slot = QuickwheelSlot(steps: (0..<6).map { index in
+            QuickwheelAction(title: "Step \(index)", iconName: "", kind: .pasteText, text: "\(index)")
+        })
+
+        slot.clampSteps()
+
+        XCTAssertEqual(QuickwheelSlot.maxSteps, 4)
+        XCTAssertEqual(slot.steps.count, 4)
+        // Keeps the leading steps in order; drops the overflow.
+        XCTAssertEqual(slot.steps.map(\.text), ["0", "1", "2", "3"])
+    }
+
+    func testSettingsClampStepsAcrossLayersOnDecode() throws {
+        let actions = (0..<5).map { "{ \"kind\": \"pasteText\", \"text\": \"\($0)\" }" }.joined(separator: ", ")
+        let json = """
+        { "layers": [ { "up": { "steps": [ \(actions) ] } } ] }
+        """
+
+        let settings = try JSONDecoder().decode(QuickwheelSettings.self, from: Data(json.utf8))
+
+        // Decoding routes through clampEditableValues, so over-long step lists
+        // are trimmed to the maximum on every layer.
+        XCTAssertEqual(settings.layers[0].up.steps.count, QuickwheelSlot.maxSteps)
+        XCTAssertEqual(settings.layers[0].up.steps.last?.text, "3")
+    }
+
     func testActionIconImagePathRoundTrips() throws {
         var action = QuickwheelAction()
         action.kind = .openURL

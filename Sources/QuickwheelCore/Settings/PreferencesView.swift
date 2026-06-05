@@ -195,6 +195,7 @@ struct PreferencesView: View {
                     Label("Add Step", systemImage: "plus")
                 }
                 .controlSize(.small)
+                .disabled(slot.steps.count >= QuickwheelSlot.maxSteps)
             }
 
             VStack(spacing: 4) {
@@ -214,7 +215,7 @@ struct PreferencesView: View {
             }
 
             if slot.steps.count > 1 {
-                Text("Each trigger runs the next step, then wraps back to step 1. The position is remembered across restarts.")
+                Text("Each trigger runs the next step, then wraps back to step 1. The position is remembered across restarts. Up to \(QuickwheelSlot.maxSteps) steps per slot.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -266,7 +267,9 @@ struct PreferencesView: View {
     }
 
     private func addStep() {
+        guard selectedSlot.steps.count < QuickwheelSlot.maxSteps else { return }
         mutateSelectedSlot { slot in
+            guard slot.steps.count < QuickwheelSlot.maxSteps else { return }
             slot.steps.append(QuickwheelAction())
         }
         selectedStep = selectedSlot.steps.count - 1

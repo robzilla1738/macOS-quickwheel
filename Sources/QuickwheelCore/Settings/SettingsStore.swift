@@ -303,6 +303,9 @@ struct QuickwheelAction: Codable, Equatable, Identifiable {
 }
 
 struct QuickwheelSlot: Codable, Equatable, Identifiable {
+    /// Maximum sequential steps a slot can cycle through on repeated triggers.
+    static let maxSteps = 4
+
     var id = UUID()
     var steps: [QuickwheelAction] = [QuickwheelAction()]
 
@@ -332,6 +335,8 @@ struct QuickwheelSlot: Codable, Equatable, Identifiable {
     mutating func clampSteps() {
         if steps.isEmpty {
             steps = [QuickwheelAction()]
+        } else if steps.count > Self.maxSteps {
+            steps = Array(steps.prefix(Self.maxSteps))
         }
     }
 

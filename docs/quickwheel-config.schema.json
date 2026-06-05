@@ -47,7 +47,8 @@
             "steps": {
               "type": "array",
               "items": { "$ref": "#/$defs/action" },
-              "minItems": 1
+              "minItems": 1,
+              "maxItems": 4
             }
           },
           "required": ["steps"],
