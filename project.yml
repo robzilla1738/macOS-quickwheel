@@ -33,8 +33,8 @@ targets:
         CFBundleInfoDictionaryVersion: "6.0"
         CFBundleName: Quickwheel
         CFBundlePackageType: APPL
-        CFBundleShortVersionString: 0.2.2
-        CFBundleVersion: "4"
+        CFBundleShortVersionString: 0.3.0
+        CFBundleVersion: "5"
         LSMinimumSystemVersion: "13.0"
         LSUIElement: true
         NSAppleEventsUsageDescription: Quickwheel runs AppleScript actions that you configure, which may control other apps.
